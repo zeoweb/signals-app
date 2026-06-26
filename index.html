@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>1TRADE • Binary Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at center, #0a0e17 0%, #05070f 100%);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .title-font { font-family: 'Space Grotesk', sans-serif; }
+
+        .glass {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .welcome-bg {
+            background: linear-gradient(135deg, #0a0e17, #1a2338);
+        }
+
+        .neon-text {
+            text-shadow: 0 0 30px #00f5ff,
+                        0 0 60px #00f5ff;
+        }
+
+        .signal-display {
+            background: #0f1625;
+            border: 2px solid rgba(0, 245, 255, 0.25);
+            box-shadow: 0 0 60px rgba(0, 245, 255, 0.15);
+        }
+
+        .scanner {
+            position: absolute;
+            top: -10%;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, #00f5ff, transparent);
+            box-shadow: 0 0 30px #00f5ff;
+            animation: scan 2.2s linear infinite;
+            opacity: 0;
+            z-index: 10;
+        }
+
+        @keyframes scan {
+            0% { top: -10%; }
+            100% { top: 110%; }
+        }
+
+        .pair-btn.active {
+            background: #00f5ff;
+            color: #0a0e17;
+            transform: scale(1.05);
+            box-shadow: 0 0 25px #00f5ff;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+<!-- Welcome Screen -->
+<div id="welcomeScreen" class="welcome-bg fixed inset-0 flex flex-col items-center justify-center z-50 transition-opacity duration-700">
+    <div class="text-center px-6 max-w-xs">
+        <!-- Logo -->
+        <div class="flex justify-center mb-8">
+            <div class="w-20 h-20 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-3xl flex items-center justify-center text-5xl font-black shadow-2xl shadow-cyan-500/50">
+                1
+            </div>
+        </div>
+
+        <h1 class="title-font text-5xl md:text-6xl font-bold tracking-tighter leading-none neon-text mb-4">
+            1TRADE
+        </h1>
+        
+        <p class="text-2xl font-light tracking-widest text-cyan-300 mb-2">BINARY ANALYTICS</p>
+        
+        <div class="h-px w-24 bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto my-8"></div>
+
+        <h2 class="text-3xl font-bold tracking-tight mb-12 leading-tight">
+            ДОБРО ПОЖАЛОВАТЬ В<br>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">АНАЛИЗАТОР</span>
+        </h2>
+
+        <button onclick="startApp()" 
+            class="w-full py-6 text-xl font-bold rounded-3xl bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 hover:brightness-110 active:scale-95 transition-all shadow-2xl shadow-cyan-500/40">
+            СТАРТ
+        </button>
+
+        <p class="text-xs text-zinc-500 mt-10">Профессиональный инструмент анализа OTC рынка</p>
+    </div>
+</div>
+
+<!-- Main App -->
+<div id="mainApp" class="w-full max-w-md mx-auto h-full flex flex-col hidden">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-5 px-1">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-cyan-500 rounded-2xl flex items-center justify-center text-2xl font-bold shadow-lg shadow-cyan-500/50">1</div>
+            <div>
+                <h1 class="title-font text-3xl font-bold tracking-tighter">1TRADE</h1>
+                <p class="text-xs text-cyan-400 -mt-1">BINARY TERMINAL</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center gap-1.5 text-xs font-medium">
+                <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                LIVE
+            </div>
+            <div id="currentTime" class="font-mono text-sm text-zinc-400"></div>
+        </div>
+    </div>
+
+    <!-- Pair Selector -->
+    <div onclick="openPairModal()" class="glass rounded-2xl p-4 mb-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-chart-line text-cyan-400 text-xl"></i>
+            <div>
+                <div class="text-sm text-zinc-400">Выбранная пара</div>
+                <div id="selectedPair" class="font-bold text-lg">EUR/USD OTC</div>
+            </div>
+        </div>
+        <i class="fas fa-chevron-down text-cyan-400"></i>
+    </div>
+
+    <!-- Main Terminal -->
+    <div class="glass rounded-3xl p-6 shadow-2xl flex-1 flex flex-col">
+
+        <!-- Signal Display -->
+        <div id="signalDisplay" class="signal-display relative rounded-2xl h-[300px] flex flex-col items-center justify-center overflow-hidden flex-shrink-0">
+            <div class="scanner" id="scanner"></div>
+
+            <div class="text-center z-10 px-4">
+                <div id="pair" class="text-cyan-300 font-bold text-2xl mb-2 tracking-widest">EUR/USD OTC</div>
+                
+                <div id="direction" class="text-7xl font-black my-6 min-h-[90px] flex items-center justify-center"></div>
+
+                <div id="infoRow" class="hidden flex gap-4 justify-center">
+                    <div class="glass px-6 py-3 rounded-2xl text-center">
+                        <div class="text-xs text-zinc-400">ВРЕМЯ</div>
+                        <div id="timeBox" class="font-bold text-xl">5 МИН</div>
+                    </div>
+                    <div class="glass px-6 py-3 rounded-2xl text-center">
+                        <div class="text-xs text-zinc-400">ПРИБЫЛЬ</div>
+                        <div id="profit" class="font-bold text-2xl text-emerald-400">89%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="status" class="absolute bottom-6 text-cyan-300 font-medium text-sm text-center w-full">
+                Система готова
+            </div>
+        </div>
+
+        <!-- Progress -->
+        <div id="progressContainer" class="hidden mt-6">
+            <div class="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                <div id="progressBar" class="h-full w-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-emerald-400 transition-all duration-75"></div>
+            </div>
+            <div class="flex justify-between text-xs text-zinc-500 mt-2">
+                <span>АНАЛИЗ РЫНКА</span>
+                <span id="phaseText">Инициализация...</span>
+            </div>
+        </div>
+
+        <button onclick="analyze()" id="mainBtn"
+            class="mt-auto w-full py-5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 font-bold text-lg tracking-widest shadow-xl shadow-cyan-500/30 active:scale-95 transition-all">
+            ПОЛУЧИТЬ СИГНАЛ
+        </button>
+
+        <!-- History -->
+        <div class="mt-6">
+            <h3 class="text-sm font-semibold text-zinc-300 mb-3 px-1">Последние сигналы</h3>
+            <div id="history" class="space-y-3 max-h-[220px] overflow-y-auto pr-2 custom-scroll"></div>
+        </div>
+    </div>
+
+    <div class="text-center text-[10px] text-zinc-500 mt-4">
+        Демонстрация • Только для образовательных целей
+    </div>
+</div>
+
+<!-- Pair Selection Modal -->
+<div id="pairModal" class="hidden fixed inset-0 bg-black/80 flex items-end lg:items-center justify-center z-50">
+    <div class="glass w-full max-w-md lg:max-w-lg rounded-t-3xl lg:rounded-3xl p-6 max-h-[85vh] overflow-hidden flex flex-col">
+        <div class="flex justify-between items-center mb-5">
+            <h2 class="text-2xl font-bold">Выбрать валютную пару</h2>
+            <button onclick="closePairModal()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+        </div>
+        <div class="overflow-y-auto flex-1" style="max-height: calc(85vh - 120px);">
+            <div id="pairsGrid" class="grid grid-cols-2 gap-3 pb-6"></div>
+        </div>
+        <button onclick="closePairModal()" class="w-full mt-4 py-4 bg-zinc-700 hover:bg-zinc-600 rounded-2xl font-medium">
+            Закрыть
+        </button>
+    </div>
+</div>
+
+<script>
+    // Data (same as before)
+    const allPairs = ["EUR/USD", "GBP/USD", "USD/JPY", "USD/CHF", "AUD/USD", "USD/CAD", "NZD/USD", "EUR/GBP", "EUR/JPY", "GBP/JPY", "CHF/JPY", "EUR/AUD", "EUR/CAD", "USD/SGD", "USD/HKD", "USD/TRY", "USD/ZAR", "BTC/USD", "ETH/USD", "LTC/USD", "XRP/USD"];
+    
+    let selectedPair = "EUR/USD OTC";
+    const marketData = [{ pair: "EUR/USD OTC", profit: "89%" }, { pair: "GBP/JPY OTC", profit: "86%" }, { pair: "AUD/CAD OTC", profit: "84%" }, { pair: "USD/JPY OTC", profit: "91%" }, { pair: "NZD/USD OTC", profit: "83%" }];
+    const phases = ["Анализ волатильности...", "Фильтрация шума...", "Поиск оптимальной пары...", "Сканирование объёмов...", "Определение входа...", "Финализация..."];
+    const timeOptions = ["3 МИН", "5 МИН", "10 МИН"];
+    let history = [];
+
+    function updateTime() {
+        setInterval(() => {
+            document.getElementById('currentTime').textContent = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        }, 1000);
+    }
+
+    function renderPairs() {
+        const container = document.getElementById('pairsGrid');
+        container.innerHTML = allPairs.map(pair => `
+            <button onclick="selectPair('${pair}')" class="pair-btn glass text-left px-5 py-4 rounded-2xl text-lg font-medium hover:bg-white/10 ${selectedPair.includes(pair) ? 'active' : ''}">
+                ${pair} <span class="text-xs text-cyan-400 block">OTC</span>
+            </button>
+        `).join('');
+    }
+
+    function selectPair(pair) {
+        selectedPair = pair + " OTC";
+        document.getElementById('selectedPair').textContent = selectedPair;
+        document.getElementById('pair').textContent = selectedPair;
+        closePairModal();
+    }
+
+    function openPairModal() {
+        document.getElementById('pairModal').classList.remove('hidden');
+        renderPairs();
+    }
+
+    function closePairModal() {
+        document.getElementById('pairModal').classList.add('hidden');
+    }
+
+    function addToHistory(pair, direction, profit) {
+        history.unshift({ pair, direction, profit, time: new Date().toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'}) });
+        if (history.length > 6) history.pop();
+
+        document.getElementById('history').innerHTML = history.map(h => `
+            <div class="glass px-4 py-3.5 rounded-2xl flex justify-between items-center">
+                <div>
+                    <span class="font-medium">${h.pair}</span>
+                    <span class="ml-2 text-xl ${h.direction === '↑' ? 'text-emerald-400' : 'text-rose-400'}">${h.direction}</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-emerald-400 font-bold">${h.profit}</span>
+                    <div class="text-xs text-zinc-500">${h.time}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function startApp() {
+        document.getElementById('welcomeScreen').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+        }, 700);
+    }
+
+    function analyze() { /* ... same analyze function as before ... */
+        const btn = document.getElementById('mainBtn');
+        const scanner = document.getElementById('scanner');
+        const status = document.getElementById('status');
+        const directionEl = document.getElementById('direction');
+        const infoRow = document.getElementById('infoRow');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const phaseText = document.getElementById('phaseText');
+
+        btn.disabled = true;
+        directionEl.innerHTML = '';
+        infoRow.classList.add('hidden');
+        scanner.style.opacity = '1';
+        progressContainer.classList.remove('hidden');
+        progressBar.style.width = '0%';
+
+        let progress = 0;
+        let phaseIndex = 0;
+        const interval = setInterval(() => {
+            progress += Math.random() * 6 + 2;
+            if (progress > 100) progress = 100;
+            progressBar.style.width = progress + '%';
+
+            if (phaseIndex < phases.length && progress > phaseIndex * 16) {
+                status.textContent = phases[phaseIndex];
+                phaseText.textContent = phases[phaseIndex];
+                phaseIndex++;
+            }
+
+            if (progress >= 100) {
+                clearInterval(interval);
+                setTimeout(showResult, 300);
+            }
+        }, 80);
+    }
+
+    function showResult() {
+        const scanner = document.getElementById('scanner');
+        const status = document.getElementById('status');
+        const directionEl = document.getElementById('direction');
+        const infoRow = document.getElementById('infoRow');
+        const btn = document.getElementById('mainBtn');
+
+        scanner.style.opacity = '0';
+        const signal = marketData[Math.floor(Math.random() * marketData.length)];
+        const isUp = Math.random() > 0.4;
+
+        document.getElementById('profit').textContent = signal.profit;
+        document.getElementById('timeBox').textContent = timeOptions[Math.floor(Math.random() * 3)];
+
+        directionEl.innerHTML = isUp 
+            ? `<span class="text-emerald-400">ВВЕРХ <i class="fas fa-arrow-trend-up"></i></span>` 
+            : `<span class="text-rose-400">ВНИЗ <i class="fas fa-arrow-trend-down"></i></span>`;
+
+        infoRow.classList.remove('hidden');
+        status.innerHTML = `✅ Сигнал сформирован`;
+        addToHistory(selectedPair, isUp ? '↑' : '↓', signal.profit);
+        btn.disabled = false;
+    }
+
+    // Initialize
+    window.onload = () => {
+        updateTime();
+        document.getElementById('pair').textContent = selectedPair;
+        document.getElementById('selectedPair').textContent = selectedPair;
+        
+        // Demo history
+        addToHistory("EUR/USD OTC", "↑", "89%");
+        addToHistory("GBP/JPY OTC", "↓", "86%");
+        addToHistory("USD/JPY OTC", "↑", "91%");
+    };
+</script>
+
+</body>
+</html>
